@@ -1,27 +1,7 @@
 import React from 'react';
-import {runner, wrapTask} from './runner'
+import {wrapTask} from '../runner/index'
+import withAsync from './withAsync'
 
-const withAsync = fun => {
-    class AsyncComponent extends React.Component {
-        constructor(props) {
-            super(props)
-            this.state = {
-                component: null
-            }
-            runner(() => {
-                let component = fun(props)
-                this.setState({
-                    component,
-                })
-            })
-        }
-
-        render() {
-            return this.state.component
-        }
-    }
-    return AsyncComponent
-}
 
 const task1 = () =>
   wrapTask(new Promise(resolve => setTimeout(() => resolve("task1"), 1000)));
@@ -36,7 +16,7 @@ const task4 = () =>
   wrapTask(new Promise(resolve => setTimeout(() => resolve("task4"), 5000)));
 
 
-const App1 = withAsync(() => {
+export const App1 = withAsync(() => {
   const ret1 = task1();
   const ret2 = task2();
   return (
@@ -48,7 +28,7 @@ const App1 = withAsync(() => {
 });
 
 
-const App2 = withAsync(() => {
+export const App2 = withAsync(() => {
     const ret3 = task3();
     const ret4 = task4();
     return (
@@ -58,9 +38,3 @@ const App2 = withAsync(() => {
       </ul>
     );
 });
-
-
-export {
-    App1,
-    App2
-}
