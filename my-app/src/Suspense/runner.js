@@ -1,7 +1,7 @@
 // 目的: 1. 当遇到异步副作用时，流程暂停，等待任务完成。当任务完成时候，继续执行流程
-let pos = 0
 
-let cache = []
+// 当前的流程上下文
+let context = {}
 
 const task1 = () => {
     return wrapTask(new Promise(resovle => setTimeout(() => {
@@ -15,27 +15,41 @@ const task2 = () => {
     }, 1000)))
 }
 
-// 异步任务包一层，用来控制任务是否进入暂态
-const wrapTask = (task) => {
-    if(cache[pos]) {
-        return cache[pos++]
+const wrapTask = task => {
+    // 每次运行 task，如果 task 已经被缓存，则返回
+    // 并更新
+    if (context.cache[context.pos]) {
+      return context.cache[context.pos++]
     }
     throw task
 }
 
 // ruuner 
 const runner = (process) => {
-    cache = []
+     // 为每个流程设置自己的上下文
+    const ctx = {
+        cache: [],
+        pos: 0,
+    }
+
     function step() {
-        pos = 0
+        ctx.pos = 0
+        // 缓存当前上下文，执行完成后恢复
+        const cachedContext = context
+        // 将上下文绑定到当前的流程的上下文
+        context = ctx
         try {
             const ret = process()
             return ret
         } catch(task) {
+            const pos = ctx.pos
             return task.then((value) => {
-                cache[pos] = value
+                ctx.cache[pos] = value
                 return step()
             })
+        }finally {
+            // 每次执行完，释放对上下文的掌控
+            context = cachedContext
         }
     }
     return step()
